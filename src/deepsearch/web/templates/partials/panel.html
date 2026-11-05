@@ -1,0 +1,69 @@
+<div id="panel" hx-get="/threads/{{ thread_id }}/panel" hx-trigger="load, every 3s"
+     hx-swap="outerHTML">
+
+  <table>
+    <tr><th>阶段</th><td>{{ progress.stage }}</td>
+        <th>状态</th><td><span class="badge {{ progress.status }}">{{ progress.status }}</span></td></tr>
+    <tr><th>大纲 / 完成章</th><td>{{ progress.outline_n }} / {{ progress.chapters_done }}</td>
+        <th>调研问题 · 素材</th><td>{{ progress.plan_n }} · {{ progress.sources }}</td></tr>
+    <tr><th>成本(已用/上限)</th><td>¥{{ progress.cost_cny }} / ¥{{ progress.cost_limit_cny }}</td>
+        <th>检索次数</th><td>{{ progress.search_used }}</td></tr>
+    {% if progress.dirty %}
+    <tr><th>待重写章</th><td colspan="3">{{ progress.dirty | join(", ") }}(审稿 {{ progress.review_rounds }} 轮)</td></tr>
+    {% endif %}
+    {% if progress.directives_open > 0 %}
+    <tr><th>未消费指令</th><td colspan="3">{{ progress.directives_open }} 条,将在下一网关消费</td></tr>
+    {% endif %}
+  </table>
+
+  {% if progress.status == "waiting_human" and job.gate %}
+    {% set gate = job.gate %}
+    {% if gate.gate == "CP1" %}{% include "partials/gate_cp1.html" %}
+    {% elif gate.gate == "CP2" %}{% include "partials/gate_cp2.html" %}
+    {% elif gate.gate == "COST" %}{% include "partials/gate_cost.html" %}
+    {% endif %}
+
+  {% elif progress.status == "done" %}
+    {% if progress.report_name %}
+    <h2>产物</h2>
+    <ul>
+      <li><a href="/files/{{ progress.report_name }}/report.md">report.md(权威源)</a></li>
+      <li><a href="/files/{{ progress.report_name }}/report.html">report.html</a></li>
+      <li><a href="/files/{{ progress.report_name }}/report.pdf">report.pdf(若已生成)</a></li>
+      <li><a href="/reports">全部产物浏览</a></li>
+    </ul>
+    {% endif %}
+    {% if progress.answer %}
+    <h2>回复</h2>
+    <pre style="white-space:pre-wrap">{{ progress.answer }}</pre>
+    {% endif %}
+    {% if progress.low_conf %}
+    <div class="gate-box">
+      <h2>分诊复核(置信度 {{ '%.2f' | format(progress.confidence ) }} 偏低,已按保守档处理)</h2>
+      <p class="muted">如档位不符,用原输入按选定档位重新执行:</p>
+      <form method="post" action="/threads/{{ thread_id }}/reroute">
+        <select name="route">
+          <option value="report">研报选题(深度流水线)</option>
+          <option value="factual">小型事实题(快查直答)</option>
+          <option value="chat">闲聊/通用问答</option>
+        </select>
+        <button type="submit">改档重跑</button>
+      </form>
+    </div>
+    {% endif %}
+
+  {% elif progress.status == "failed" %}
+    <h2>错误</h2>
+    <pre class="muted" style="white-space:pre-wrap">{{ progress.error }}</pre>
+    <form method="post" action="/jobs/{{ job.id }}/retry">
+      <button type="submit">重试(全新 thread 同输入重跑)</button>
+    </form>
+  {% endif %}
+
+  {% if progress.status in ("queued", "running", "waiting_human") %}
+  <form method="post" action="/jobs/{{ job.id }}/cancel" style="margin-top:.6rem;">
+    <button type="submit" class="danger">取消任务</button>
+    <span class="muted">running 中的任务在本轮超步结束后停下(取消点仅在节点边界生效)</span>
+  </form>
+  {% endif %}
+</div>

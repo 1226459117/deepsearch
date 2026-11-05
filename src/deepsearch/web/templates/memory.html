@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}记忆管理{% endblock %}
+{% block content %}
+<h1>记忆闭环管理 <span class="muted">候选采纳 · 风格卡 · 数据源评分(定稿 R4/Q39/Q44)</span></h1>
+
+{% if offline %}
+<p class="badge failed">L3 存储离线</p>
+<p class="muted">{{ offline_err }} —— 本页功能需 PG/Milvus 自备实例可达;
+研报主链路不受影响(记忆注入自动降级)。网络恢复后刷新即可。</p>
+{% endif %}
+
+<h2>待审候选({{ pending | length }})</h2>
+<p class="muted">fact=事实归档(自动生效无需人审);profile=偏好画像(必须人审后才进拦截检索池)。</p>
+<table>
+  <tr><th>ID</th><th>类型</th><th>来源</th><th>内容</th><th>操作</th></tr>
+  {% for c in pending %}
+  <tr>
+    <td>{{ c.id }}</td>
+    <td><span class="badge">{{ c.kind }}</span></td>
+    <td class="muted">{{ c.source_type }}<br>{{ c.source_ref or "" }}</td>
+    <td>{{ c.content }}</td>
+    <td style="white-space:nowrap;">
+      <form method="post" action="/memory/adopt" style="display:inline">
+        <input type="hidden" name="candidate_id" value="{{ c.id }}">
+        <button type="submit">采纳</button>
+      </form>
+      <form method="post" action="/memory/reject" style="display:inline">
+        <input type="hidden" name="candidate_id" value="{{ c.id }}">
+        <button type="submit" class="danger">拒绝</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">无待审候选(CP2 人工改稿 diff、任务结束蒸馏都会在此产出候选)</td></tr>
+  {% endfor %}
+</table>
+
+<details>
+  <summary class="muted">已采纳 {{ adopted | length }} / 已拒绝 {{ rejected | length }}</summary>
+  <table>
+    <tr><th>ID</th><th>类型</th><th>内容</th></tr>
+    {% for c in adopted %}<tr><td>{{ c.id }}</td><td>{{ c.kind }}</td><td>{{ c.content }}</td></tr>{% endfor %}
+  </table>
+  <table>
+    {% for c in rejected %}<tr><td>{{ c.id }}</td><td>{{ c.kind }}</td><td class="muted">{{ c.content }}</td></tr>{% endfor %}
+  </table>
+</details>
+
+<h2>风格卡(注入 plan/chapter 写作提示)</h2>
+<form method="post" action="/memory/style">
+  <textarea name="content" rows="3"
+            placeholder="例:结论先行,少用形容词;数据必须带年份与来源;每章至少一张图表说明">{{ style_card }}</textarea>
+  <p style="margin-top:.5rem"><button type="submit">保存风格卡</button></p>
+</form>
+
+<h2>数据源可靠性(域名级轻评分,Q38-C)</h2>
+<table>
+  <tr><th>域名</th><th>score</th><th>备注</th></tr>
+  {% for r in ratings %}
+  <tr><td>{{ r.domain }}</td><td>{{ r.score }}</td><td class="muted">{{ r.note or "" }}</td></tr>
+  {% else %}
+  <tr><td colspan="3" class="muted">暂无评分,merge 阶段默认 0.5</td></tr>
+  {% endfor %}
+</table>
+<form method="post" action="/memory/rating" style="display:flex; gap:.6rem; align-items:end; flex-wrap:wrap;">
+  <label><div class="muted">域名</div><input type="text" name="domain" placeholder="revenue.caixin.com" required style="width:220px"></label>
+  <label><div class="muted">score(0~1)</div><input type="number" name="score" step="0.05" min="0" max="1" value="0.8" style="width:100px"></label>
+  <label><div class="muted">备注</div><input type="text" name="note" placeholder="如:口径严谨" style="width:220px"></label>
+  <button type="submit">提交评分</button>
+</form>
+{% endblock %}

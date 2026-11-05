@@ -1,0 +1,14 @@
+<div class="gate-box">
+  <h2>COST · 成本护栏暂停闸</h2>
+  <p>已消耗 <b>¥{{ gate.accrued_cny }}</b> / 上限 ¥{{ gate.limit_cny }}(¥5/篇护栏自动暂停,定稿 R12)</p>
+  <p class="muted">{{ gate.hint }}</p>
+  <form method="post" action="/threads/{{ thread_id }}/gate">
+    <p style="display:flex; gap:.6rem; align-items:center;">
+      <label for="raise_to">新上限(元)</label>
+      <input id="raise_to" type="number" name="raise_to" step="0.5" min="{{ gate.accrued_cny }}"
+             value="{{ (gate.accrued_cny or 0) + 5 }}" style="max-width:140px;">
+      <button type="submit" name="action" value="raise">抬升上限并继续</button>
+      <button type="submit" name="action" value="abort" class="danger">终止任务</button>
+    </p>
+  </form>
+</div>

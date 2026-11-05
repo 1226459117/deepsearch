@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}研报产物{% endblock %}
+{% block content %}
+<h1>研报产物浏览</h1>
+<p class="muted">目录:{{ root }} · MD 为唯一权威源,HTML/PDF 为渲染产物(定稿 Q5)</p>
+
+{% for d in dirs %}
+<h2><a href="/files/{{ d.name }}/report.md">{{ d.name }}</a></h2>
+<ul>
+  {% for rel in d.rels %}
+  <li><a href="/files/{{ d.name }}/{{ rel }}">{{ rel }}</a></li>
+  {% endfor %}
+  {% if not d.rels %}<li class="muted">(空目录)</li>{% endif %}
+</ul>
+{% else %}
+<p class="muted">还没有产物。提交一个研报选题跑完整流水线后,这里会出现 reports/&lt;日期&gt;-&lt;主题&gt;-&lt;thread&gt;/ 目录。</p>
+{% endfor %}
+{% endblock %}

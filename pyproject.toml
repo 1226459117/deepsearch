@@ -1,0 +1,63 @@
+[project]
+name = "deepsearch"
+version = "0.1.0"
+description = "深度研报智能体系统:LangGraph 四档分诊 + 双 checkpoint 研报流水线 + Redis/PG/Milvus 三层记忆"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    # 编排
+    "langgraph>=0.3",
+    "langgraph-checkpoint-sqlite>=2.0",
+    "aiosqlite>=0.20",
+    # Web
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.20",
+    "sse-starlette>=2.1",
+    # 配置
+    "pydantic-settings>=2.7",
+    # 存储
+    "redis>=5.2",
+    "psycopg[binary]>=3.2",
+    "psycopg-pool>=3.2",
+    "sqlalchemy>=2.0",
+    "pymilvus>=2.5",
+    # 模型调用(OpenAI 兼容协议:DeepSeek 主档 / Qwen 廉价档 / Dashscope embedding)
+    "openai>=1.60",
+    "tenacity>=9.0",
+    # 检索与数据
+    "httpx>=0.28",
+    "akshare>=1.16",
+    "pandas>=2.2",
+    "pyarrow>=18.0",
+    "matplotlib>=3.10",
+    "pymupdf>=1.25",
+    # 导出
+    "weasyprint>=63",
+    "markdown>=3.7",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+]
+
+[project.scripts]
+deepsearch-serve = "deepsearch.web.server:main"
+deepsearch-initdb = "deepsearch.storage.init_db:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+# 国内网络环境下载 PyPI 官方源龟速,默认改走阿里云镜像
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true

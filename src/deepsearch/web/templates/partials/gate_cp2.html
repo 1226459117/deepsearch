@@ -1,0 +1,45 @@
+<div class="gate-box">
+  <h2>CP2 · 成稿确认闸(必停)</h2>
+  <p class="muted">{{ gate.hint }}</p>
+
+  {% if gate.directives %}
+  <p><b>待消费指令:</b></p>
+  <ul>{% for d in gate.directives %}<li>{{ d.text }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if gate.review_findings %}
+  <details open><summary>审稿遗留问题(定向重写后仍未消除)</summary>
+    <ul>{% for cid, note in gate.review_findings.items() if note %}
+      <li><b>{{ cid }}</b>:{{ note }}</li>
+    {% endfor %}</ul>
+  </details>
+  {% endif %}
+
+  {% if gate.conflict_notes %}
+  <details><summary>系统裁决的数据分歧({{ gate.conflict_notes | length }} 条,可人工改判)</summary>
+    <ul>{% for n in gate.conflict_notes %}
+      <li><b>{{ n.question }}</b> → 已采信 {{ n.resolved_with }}({{ n.resolution_basis }})</li>
+    {% endfor %}</ul>
+  </details>
+  {% endif %}
+
+  <form method="post" action="/threads/{{ thread_id }}/gate">
+    <p><b>逐章改稿</b>(内容保持与原稿一致 = 不改动;修改过的章将直接采用人工稿)</p>
+    {% for cid, md in gate.chapters.items() %}
+    <details {% if cid in (gate.review_findings or {}) %}open{% endif %}>
+      <summary>{{ cid }}({{ md | length }} 字符){% if gate.review_findings and gate.review_findings.get(cid) %} ⚠ {{ gate.review_findings[cid] }}{% endif %}</summary>
+      <textarea name="edit_{{ cid }}" rows="8">{{ md }}</textarea>
+    </details>
+    {% endfor %}
+
+    <p style="margin-top:.6rem;"><label><b>分歧人工定夺</b>(JSON 列表,可空)</label></p>
+    <textarea name="resolutions_json" rows="3"
+              placeholder='[{"question": "装机量口径?", "decision": "以协会公告为准"}]'></textarea>
+
+    <p style="margin-top:.6rem; display:flex; gap:.6rem;">
+      <button type="submit" name="action" value="submit">提交改稿并装配导出</button>
+      <button type="submit" name="action" value="approve">全部认可 AI 稿</button>
+      <button type="submit" name="action" value="abort" class="danger">终止(草稿保留)</button>
+    </p>
+  </form>
+</div>

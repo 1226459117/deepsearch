@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}deepsearch{% endblock %} · 深度研报智能体系统</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    body { font-family: "Microsoft YaHei", system-ui, sans-serif; max-width: 900px;
+           margin: 2.5rem auto; padding: 0 1rem; color: #222; line-height: 1.6; }
+    nav a { margin-right: 1rem; color: #0a7d33; text-decoration: none; font-weight: 600; }
+    h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; }
+    textarea, input[type=text], input[type=number], select {
+      width: 100%; box-sizing: border-box; font-family: inherit; font-size: .92rem;
+      padding: .45rem; border: 1px solid #bbb; border-radius: 4px; }
+    button { padding: .4rem 1rem; border: 1px solid #0a7d33; background: #fff;
+             color: #0a7d33; border-radius: 4px; cursor: pointer; font-size: .9rem; }
+    button:hover { background: #0a7d33; color: #fff; }
+    button.danger { border-color: #b3261e; color: #b3261e; }
+    button.danger:hover { background: #b3261e; color: #fff; }
+    table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+    th, td { border: 1px solid #ddd; padding: .35rem .6rem; text-align: left; }
+    .badge { display: inline-block; padding: .1rem .55rem; border-radius: 999px;
+             font-size: .8rem; background: #eee; }
+    .badge.queued { background: #e8f0fe; color: #1a56b8; }
+    .badge.running { background: #fff4d6; color: #8a6d0b; }
+    .badge.waiting_human { background: #fde3e1; color: #b3261e; font-weight: 600; }
+    .badge.done { background: #e2f3e6; color: #0a7d33; }
+    .badge.failed { background: #333; color: #fff; }
+    .gate-box { border: 2px solid #0a7d33; border-radius: 6px; padding: 1rem;
+                margin: 1rem 0; background: #f7fbf8; }
+    .evlog { font-family: Consolas, monospace; font-size: .82rem; background: #111;
+             color: #9f9; padding: .6rem; border-radius: 6px; max-height: 240px;
+             overflow-y: auto; list-style: none; }
+    .muted { color: #777; font-size: .85rem; }
+    details { margin: .4rem 0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">新建任务</a>
+    <a href="/reports">研报产物</a>
+    <a href="/memory">记忆管理</a>
+    <a href="/healthz">健康探测</a>
+  </nav>
+  {% block content %}{% endblock %}
+</body>
+</html>

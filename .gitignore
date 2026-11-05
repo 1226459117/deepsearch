@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# IDE / 本地代理工具状态
+.idea/
+.qoder/
+.claude/
+.agents/
+skills-lock.json
+
+# 本地密钥与运行数据(真相源:SQLite checkpoint / reports 落盘目录)
+.env
+.env.local
+data/
+reports/

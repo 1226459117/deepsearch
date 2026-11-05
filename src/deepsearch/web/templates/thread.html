@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}任务 {{ thread_id }}{% endblock %}
+{% block content %}
+<h1>任务详情</h1>
+<p class="muted">thread = {{ thread_id }} · 输入:{{ job.input or "(续单)" }} · 状态徽章随下方面板 3s 轮询刷新</p>
+
+<div id="panel" hx-get="/threads/{{ thread_id }}/panel" hx-trigger="load, every 3s"
+     hx-swap="outerHTML">
+  <p class="muted">加载进度…</p>
+</div>
+
+<h2>执行事件流(SSE)</h2>
+<ul id="evlog" class="evlog"><li class="muted">连接中…</li></ul>
+
+<h2>向本任务投递指令(task_steering,不打断当前执行,下一网关消费)</h2>
+<form method="post" action="/threads/{{ thread_id }}/steer">
+  <textarea name="text" rows="2" required placeholder="例:第二章多画两张图 / 结论保守一点"></textarea>
+  <p style="margin-top:.5rem"><button type="submit">投递指令</button></p>
+</form>
+
+<h2>上传私有资料(入本任务检索池,PDF/TXT/MD,≤40MB)</h2>
+<form method="post" action="/threads/{{ thread_id }}/upload" enctype="multipart/form-data">
+  <p><input type="file" name="file" accept=".pdf,.txt,.md,.markdown" required>
+     <button type="submit">解析并入池</button></p>
+  <p class="muted">PDF 优先走 MinerU(需配 MINERU_API_URL),否则 pymupdf 抽文本;入池后参与章节素材检索。</p>
+</form>
+
+<script>
+(function () {
+  const log = document.getElementById("evlog");
+  let first = true;
+  const add = (txt, cls) => {
+    if (first) { log.innerHTML = ""; first = false; }
+    const li = document.createElement("li");
+    li.textContent = new Date().toLocaleTimeString() + "  " + txt;
+    if (cls) li.className = cls;
+    log.appendChild(li);
+    log.scrollTop = log.scrollHeight;
+  };
+  const es = new EventSource("/threads/{{ thread_id }}/events");
+  es.addEventListener("node", e => {
+    const d = JSON.parse(e.data);
+    const p = d.progress || {};
+    add("[" + d.node + "] " + (p.stage || "") + " · ¥" + (p.cost_cny ?? 0));
+  });
+  es.addEventListener("gate", e => {
+    const d = JSON.parse(e.data);
+    add("⏸ 等待人工确认:" + (d.gate && d.gate.gate), "muted");
+    es.close();  // 网关后靠 panel 轮询兜底
+  });
+  es.addEventListener("resumed", () => add("▶ 决策已提交,任务恢复执行"));
+  es.addEventListener("done", e => {
+    const d = JSON.parse(e.data);
+    add("✔ 完成:" + (d.progress && d.progress.stage || ""), "muted");
+    es.close();
+  });
+  es.addEventListener("error", e => {
+    let msg = "执行失败";
+    try { msg += ":" + JSON.parse(e.data).error.slice(0, 120); } catch (_) {}
+    add("✖ " + msg, "muted");
+    es.close();
+  });
+  es.onerror = () => { add("(SSE 断开,进度改由 3s 轮询刷新)", "muted"); };
+})();
+</script>
+{% endblock %}

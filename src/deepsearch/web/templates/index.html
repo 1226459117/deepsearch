@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}选题输入{% endblock %}
+{% block content %}
+<h1>深度研报智能体 <span class="muted">v{{ version }} · 定稿 v6-final</span></h1>
+
+<form method="post" action="/tasks">
+  <p><label for="topic"><b>选题 / 提问</b>(一句话即可,系统自动分诊:闲聊 · 小型事实题 · 深度研报)</label></p>
+  <textarea id="topic" name="topic" rows="3" required
+            placeholder="例:光伏行业前景分析 / 600519 最新毛利率 / 今天天气怎么样"></textarea>
+  <p style="display:flex; gap:.6rem; align-items:center; margin-top:.6rem;">
+    <label for="route" class="muted">分诊档位</label>
+    <select id="route" name="route" style="max-width:220px;">
+      <option value="">自动分诊(推荐)</option>
+      <option value="report">强制深度研报(走 14 节点流水线)</option>
+      <option value="chat">强制闲聊</option>
+      <option value="factual">强制小型事实题</option>
+    </select>
+    <button type="submit">提交任务</button>
+  </p>
+</form>
+
+<h2>最近任务 <span class="muted">{{ counts }}</span></h2>
+<table>
+  <tr><th>thread</th><th>输入</th><th>档位</th><th>状态</th><th>更新</th><th>操作</th></tr>
+  {% for j in jobs %}
+  <tr>
+    <td><a href="/threads/{{ j.thread_id }}">{{ j.thread_id }}</a></td>
+    <td>{{ j.input[:40] }}</td>
+    <td>{{ j.route or "自动" }}</td>
+    <td><span class="badge {{ j.status }}">{{ j.status }}</span></td>
+    <td class="muted">{{ "%.0f" % ((now or 0) - j.updated_at) }}s 前</td>
+    <td style="white-space:nowrap;">
+      {% if j.status in ("queued", "running", "waiting_human") %}
+      <form method="post" action="/jobs/{{ j.id }}/cancel" style="display:inline">
+        <button type="submit" class="danger">取消</button>
+      </form>
+      {% elif j.status == "failed" %}
+      <form method="post" action="/jobs/{{ j.id }}/retry" style="display:inline">
+        <button type="submit">重试</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="muted">暂无任务</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,27 @@
+<div class="gate-box">
+  <h2>CP1 · 大纲确认闸(必停)</h2>
+  <p class="muted">{{ gate.hint }}</p>
+
+  {% if gate.directives %}
+  <p><b>待消费指令:</b></p>
+  <ul>{% for d in gate.directives %}<li>{{ d.text }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if gate.conflict_notes %}
+  <details><summary>数据分歧清单({{ gate.conflict_notes | length }} 条,merge_align 三级裁决仍未完全消除)</summary>
+    <ul>{% for n in gate.conflict_notes %}
+      <li><b>{{ n.question }}</b> → 采信 {{ n.resolved_with }}({{ n.resolution_basis }})</li>
+    {% endfor %}</ul>
+  </details>
+  {% endif %}
+
+  <form method="post" action="/threads/{{ thread_id }}/gate">
+    <p><label><b>大纲编辑</b>(JSON 列表;留空 = 采用 AI 大纲)</label></p>
+    <textarea name="outline_json" rows="10" placeholder='[{"title": "第一章标题", "bullets": ["要点"]}]'>{{ gate.outline | js_json }}</textarea>
+    <p style="margin-top:.6rem; display:flex; gap:.6rem;">
+      <button type="submit" name="action" value="update">按编辑后大纲继续</button>
+      <button type="submit" name="action" value="approve">认可大纲,开始写作</button>
+      <button type="submit" name="action" value="abort" class="danger">终止任务</button>
+    </p>
+  </form>
+</div>

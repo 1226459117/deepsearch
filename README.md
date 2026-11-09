@@ -6,7 +6,7 @@
 
 ```
                  ┌─ 四档分诊 triage(utility 档模型,低置信 web 弹窗人工改档)
-  FastAPI+HTMX   ├─ chat        闲聊/通用问答(Redis 窗口 + 自主搜索≤1)
+  FastAPI+Vue SPA├─ chat        闲聊/通用问答(Redis 窗口 + 自主搜索≤1)
   选题输入页  →  ├─ factual     小型事实题(检索≤2 + AkShare≤1)
   SQLite 任务队列├─ steering    在跑任务的转向指令(update_state 写通道,不抢占)
   串行 worker    └─ report      研报 14 节点流水线:
@@ -28,7 +28,15 @@
 uv sync                                   # 安装依赖(默认走阿里云镜像)
 copy .env.example .env                    # 填模型 keys 与存储连接(自备实例)
 uv run deepsearch-initdb                  # PG 迁移 + Milvus 建集合 + FTS 建库 + Redis 探活
+cd frontend && npm install && npm run build && cd ..   # 构建 Vue 前端(产物由后端托管)
 uv run deepsearch-serve                   # http://127.0.0.1:8000
+```
+
+前端为 Vue3 + Element Plus + Vite SPA(`frontend/`),构建产物 `frontend/dist` 由 FastAPI 在 `/` 直接托管;未构建时首页回退遗留 Jinja 模板。前端开发模式:
+
+```bash
+uv run deepsearch-serve                   # 先起后端(8000)
+cd frontend && npm run dev                # Vite 开发服(5173),/api、SSE、/files 代理到 8000
 ```
 
 `.env` 关键项:`PRIMARY_*`(DeepSeek 级主档)、`UTILITY_*`(Qwen-Turbo 级廉价档)、`EMBEDDING_*`(Dashscope text-embedding-v3)、`REDIS_URL` / `POSTGRES_DSN` / `MILVUS_URI`(三层存储)、`BOCHA_API_KEY` / `TAVILY_API_KEY`(双链检索)、`COST_LIMIT_CNY_PER_REPORT`(默认 5.0)、`MINERU_API_URL`(可选,PDF 表格解析)。
@@ -74,11 +82,11 @@ uv run python scripts/smoke_intercept.py  # intercept 三注入点真实存储�
 uv run python scripts/live_report.py [选题]  # 真模型端到端实跑一篇(¥5 护栏演练)
 ```
 
-目录:`src/deepsearch/graph`(主图与节点)、`memory`(三层记忆)、`tools`(检索/FTS/解析/导出)、`web`(队列/worker/网关/路由)、`storage`(PG 迁移)、`scripts`(冒烟与实跑)。
+目录:`src/deepsearch/graph`(主图与节点)、`memory`(三层记忆)、`tools`(检索/FTS/解析/导出)、`web`(队列/worker/网关/路由,含 `/api` JSON 接口与遗留 HTMX 端点)、`storage`(PG 迁移)、`scripts`(冒烟与实跑)、`frontend`(Vue3 + Element Plus + Vite SPA)。
 
 ## 验收状态(P0–P7 最终交付)
 
-- **离线测试**:131 项全绿(模型/网络/存储全替身,含存储离线降级契约测试);
+- **离线测试**:143 项全绿(模型/网络/存储全替身,含存储离线降级契约测试与 SPA JSON API 测试);
 - **冒烟**:graph / tools / writing / web 四套全部通过;
 - **真实连通**:smoke_infra / smoke_intercept 在自备实例离线时告警降级/自动 SKIP,符合预期;
 - **真模型实跑**:零替身完整走通一篇研报(9 章/298 素材/62 检索/¥0.42,report.md+html 落盘);

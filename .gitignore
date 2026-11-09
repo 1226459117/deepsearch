@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Frontend(Vue SPA)
+frontend/node_modules/
+
 # IDE / 本地代理工具状态
 .idea/
 .qoder/
